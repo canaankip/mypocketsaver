@@ -1,149 +1,176 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyPocketSaverApp());
+  runApp(MyPocketSaver());
 }
 
-class MyPocketSaverApp extends StatelessWidget {
+class MyPocketSaver extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MyPocketSaver',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-      ),
-      home: HomePage(),
+      theme: ThemeData(primarySwatch: Colors.green),
+      home: LoginPage(),
     );
   }
 }
 
-// ✅ HOME PAGE
-class HomePage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _nameController = TextEditingController();
+
+  void _login() {
+    String name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please enter your name')));
+      return;
+    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage(userName: name)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('MyPocketSaver'),
-      ),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Welcome, Canaan!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 24),
-              ElevatedButton(
-                child: Text('Track Expenses'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ExpensePage()),
-                  );
-                },
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                child: Text('Savings Goals'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SavingsPage()),
-                  );
-                },
-              ),
-            ],
-          ),
+      appBar: AppBar(title: Text('Login')),
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Welcome to MyPocketSaver!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Enter your name'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(child: Text('Continue'), onPressed: _login),
+          ],
         ),
       ),
     );
   }
 }
 
-// ✅ EXPENSE PAGE
-class ExpensePage extends StatefulWidget {
-  @override
-  _ExpensePageState createState() => _ExpensePageState();
-}
+class HomePage extends StatelessWidget {
+  final String userName;
 
-class _ExpensePageState extends State<ExpensePage> {
-  final _formKey = GlobalKey<FormState>();
-  final _expenseNameController = TextEditingController();
-  final _expenseAmountController = TextEditingController();
-  List<Map<String, dynamic>> _expenses = [];
-
-  void _addExpense() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _expenses.add({
-          'name': _expenseNameController.text,
-          'amount': double.parse(_expenseAmountController.text),
-        });
-        _expenseNameController.clear();
-        _expenseAmountController.clear();
-      });
-    }
-  }
-
-  double get totalExpenses {
-    return _expenses.fold(0, (sum, item) => sum + item['amount']);
-  }
+  HomePage({required this.userName});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Track Expenses'),
+      appBar: AppBar(title: Text('MyPocketSaver')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Welcome, $userName!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              child: Text('Track Expenses'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ExpenseTracker()),
+                );
+              },
+            ),
+            ElevatedButton(
+              child: Text('Savings Goals'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SavingsGoals()),
+                );
+              },
+            ),
+            ElevatedButton(
+              child: Text('Premium Tips (Upgrade)'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PremiumTips()),
+                );
+              },
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class ExpenseTracker extends StatefulWidget {
+  @override
+  _ExpenseTrackerState createState() => _ExpenseTrackerState();
+}
+
+class _ExpenseTrackerState extends State<ExpenseTracker> {
+  final _nameController = TextEditingController();
+  final _amountController = TextEditingController();
+  List<Map<String, dynamic>> _expenses = [];
+
+  void _addExpense() {
+    String name = _nameController.text.trim();
+    double? amount = double.tryParse(_amountController.text.trim());
+
+    if (name.isEmpty || amount == null || amount <= 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please enter valid data')));
+      return;
+    }
+
+    setState(() {
+      _expenses.add({'name': name, 'amount': amount});
+    });
+
+    _nameController.clear();
+    _amountController.clear();
+  }
+
+  double get total => _expenses.fold(0, (sum, item) => sum + item['amount']);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Expense Tracker')),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _expenseNameController,
-                    decoration: InputDecoration(labelText: 'Expense Name'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an expense name';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: _expenseAmountController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: 'Amount'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      if (double.tryParse(value) == null || double.parse(value) <= 0) {
-                        return 'Enter a valid positive number';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    child: Text('Add Expense'),
-                    onPressed: _addExpense,
-                  ),
-                ],
-              ),
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: 'Expense Name'),
             ),
+            TextField(
+              controller: _amountController,
+              decoration: InputDecoration(labelText: 'Amount'),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(child: Text('Add Expense'), onPressed: _addExpense),
             SizedBox(height: 20),
             Text(
-              'Total Expenses: \$${totalExpenses.toStringAsFixed(2)}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'Total: KES ${total.toStringAsFixed(2)}',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            Divider(),
             Expanded(
               child: ListView.builder(
                 itemCount: _expenses.length,
@@ -151,7 +178,9 @@ class _ExpensePageState extends State<ExpensePage> {
                   final expense = _expenses[index];
                   return ListTile(
                     title: Text(expense['name']),
-                    trailing: Text('\$${expense['amount'].toStringAsFixed(2)}'),
+                    trailing: Text(
+                      'KES ${expense['amount'].toStringAsFixed(2)}',
+                    ),
                   );
                 },
               ),
@@ -163,58 +192,81 @@ class _ExpensePageState extends State<ExpensePage> {
   }
 }
 
-// ✅ SAVINGS PAGE
-class SavingsPage extends StatefulWidget {
+class SavingsGoals extends StatefulWidget {
   @override
-  _SavingsPageState createState() => _SavingsPageState();
+  _SavingsGoalsState createState() => _SavingsGoalsState();
 }
 
-class _SavingsPageState extends State<SavingsPage> {
+class _SavingsGoalsState extends State<SavingsGoals> {
   final _goalController = TextEditingController();
   List<String> _goals = [];
 
   void _addGoal() {
-    if (_goalController.text.isNotEmpty) {
-      setState(() {
-        _goals.add(_goalController.text);
-        _goalController.clear();
-      });
+    String goal = _goalController.text.trim();
+    if (goal.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Please enter a goal')));
+      return;
     }
+
+    setState(() {
+      _goals.add(goal);
+    });
+
+    _goalController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Savings Goals'),
-      ),
+      appBar: AppBar(title: Text('Savings Goals')),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
               controller: _goalController,
-              decoration: InputDecoration(
-                labelText: 'New Savings Goal',
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.add),
-                  onPressed: _addGoal,
-                ),
+              decoration: InputDecoration(labelText: 'New Goal'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(child: Text('Add Goal'), onPressed: _addGoal),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _goals.length,
+                itemBuilder: (context, index) {
+                  return ListTile(title: Text(_goals[index]));
+                },
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumTips extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Premium Budgeting Tips')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Unlock expert tips to save more money!',
+              style: TextStyle(fontSize: 18),
+            ),
             SizedBox(height: 20),
-            Expanded(
-              child: _goals.isEmpty
-                  ? Center(child: Text('No savings goals yet'))
-                  : ListView.builder(
-                      itemCount: _goals.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          leading: Icon(Icons.check_circle_outline),
-                          title: Text(_goals[index]),
-                        );
-                      },
-                    ),
+            ElevatedButton(
+              child: Text('Subscribe Now (KES 50/month)'),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Subscribed to Premium Tips!')),
+                );
+              },
             ),
           ],
         ),
